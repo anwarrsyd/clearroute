@@ -38,7 +38,7 @@ class HomeController extends Controller
         {
             $x2 = $this->finalLongitude($x3, $x1);
             $y2 = $this->finalLatitude($y3, $y1);
-            $array[$i] = DB::SELECT("SELECT * FROM pgr_aStarFromAtoBviaC_line('ways', ".$x1.",".$y1.",".$x2.",".$y2.",".$x3.",".$y3.")");
+            $array[$i] = DB::SELECT("SELECT * FROM pgr_aStarFromAtoBviaC_line('ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")");
         }
         return json_encode($array);
     }
