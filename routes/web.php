@@ -17,3 +17,4 @@ Route::get('/', function () {
 
 route::get('coba','HomeController@coba');
 route::get('lokasi/{lat}/{long}','HomeController@lokasi');
+route::get('getroute/{long1}/{lat1}/{long3}/{lat3}','HomeController@getRoute');
