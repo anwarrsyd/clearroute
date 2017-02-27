@@ -18,5 +18,5 @@ Route::get('/', function () {
 route::get('coba','HomeController@coba');
 route::get('lokasi/{lat}/{long}','HomeController@lokasi');
 route::get('getroute/{long1}/{lat1}/{long3}/{lat3}','HomeController@getRoute');
-route::get('cobajson','HomeController@kondisicuaca');
+route::get('kondisicuaca/{long1}/{lat1}/{long3}/{lat3}','HomeController@kondisicuaca');
 route::get('cobaxml','HomeController@cobaxml');

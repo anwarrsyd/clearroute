@@ -102,12 +102,23 @@ class HomeController extends Controller
   }
 
 
-    public function kondisicuaca(){
+    public function kondisicuaca($x1,$y1,$x2,$y2){
         // $str = file_get_contents('http://localhost/a');
-        $str=$this->getRoute(112.7991422,-7.2817807,112.723723,-7.336683);
+        // $str=$this->getRoute(112.7991422,-7.2817807,112.723723,-7.336683);
         // dd($str);
+        $str=$this->getRoute($y1,$x1,$y2,$x2);
         $coba=json_decode($str);
         // dd($coba);
+         $count=0;
+         $i=0;
+         $count1=0;
+         $i1=0;
+         $count2=0;
+         $i2=0;
+
+
+
+         // rute 1
         foreach ($coba['0'] as $key => $value) {
            $x=$value->x;
            $y=$value->y;
@@ -117,21 +128,64 @@ class HomeController extends Controller
                     //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
                     // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
                     // order by jarak limit 1");
-
+                   
                    foreach ($query as $key => $hasil) {
                     $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
+                   
                     foreach ($kategoricuaca as $key => $mantap) {
-                                        echo $hasil->namapos;
-                                        echo " ";
-                                        echo $mantap->kategori;
-                                        echo "<br>";
-                                    }                
-
-                }
+                                        $i+=$mantap->kategori;
+                                        $coba[0][$count]->kategori=$mantap->kategori;
+                                        $count++;
+                                    }                                               
+                }              
             }
-           
         }
-      
+         //rute 2
+        foreach ($coba['1'] as $key => $value) {
+           $x1=$value->x;
+           $y1=$value->y;
+           
+            if($x1!==null){
+                   $query=DB::select("SELECT * FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x1."  ".$y1.")',4326)  LIMIT 1 ");
+                    //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
+                    // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
+                    // order by jarak limit 1");
+                   
+                   foreach ($query as $key => $hasil) {
+                    $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
+                   
+                    foreach ($kategoricuaca as $key => $mantap) {
+                                        $i1+=$mantap->kategori;
+                                        $coba[1][$count1]->kategori=$mantap->kategori;
+                                        $count1++;
+                                    }                                               
+                }              
+            }
+        }
+         //rute 3
+        foreach ($coba['2'] as $key => $value) {
+           $x2=$value->x;
+           $y2=$value->y;
+           
+            if($x2!==null){
+                   $query=DB::select("SELECT * FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x2."  ".$y2.")',4326)  LIMIT 1 ");
+                    //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
+                    // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
+                    // order by jarak limit 1");
+                   
+                   foreach ($query as $key => $hasil) {
+                    $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
+                   
+                    foreach ($kategoricuaca as $key => $mantap) {
+                                        $i2+=$mantap->kategori;
+                                        $coba[2][$count2]->kategori=$mantap->kategori;
+                                        $count2++;
+                                    }                                               
+                }              
+            }
+        }
+
+         return json_encode($coba);  
     }
 
     public function cobaxml(){
