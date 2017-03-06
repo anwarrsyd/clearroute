@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use DB;
+use SimpleXMLElement;
 
 use Illuminate\Http\Request;
 
@@ -20,7 +21,6 @@ class HomeController extends Controller
             ->update(['the_geom' => $coba->st_geomfromtext]);	
     		}
     }
-
 
     public function lokasi($lat,$long){
 
@@ -51,6 +51,7 @@ class HomeController extends Controller
                 'geometry',   ST_AsGeoJSON(geom)::jsonb
             ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
         }
+
         return $array;
     }
 
@@ -108,6 +109,56 @@ class HomeController extends Controller
         }
 
         return $batas_baru;
+    }
+
+    public function kondisicuaca($x1,$y1,$x2,$y2){
+        $str=$this->getRoute($x1,$y1,$y2,$x2);
+        $coba=json_decode($str);
+
+         // rute 1
+        for ($a=0; $a <3 ; $a++) { 
+               $count=0;
+               $i=0;
+               foreach ($coba[$a] as $key => $value) {
+               $x=$value->x;
+               $y=$value->y;
+                   
+                if($x!==null){
+                       $query=DB::select("SELECT * FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x."  ".$y.")',4326)  LIMIT 1 ");
+                        //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
+                        // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
+                        // order by jarak limit 1");
+                       
+                       foreach ($query as $key => $hasil) {
+                        $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
+                       
+                        foreach ($kategoricuaca as $key => $mantap) {
+                                            $i+=$mantap->kategori;
+                                            $coba[$a][$count]->kategori=$mantap->kategori;
+                                            $count++;
+                                        }                                               
+                    }              
+                }
+                }
+           }
+
+         return json_encode($coba);  
+    }
+
+    public function cobaxml(){
+        $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
+        $data=new SimpleXMLElement($xml);
+        foreach ($data->rekaman as $key ) {
+            DB::table('rekaman')->insert(
+                    ['idrekaman'=>$key->idrekaman,
+                     'idpos'=>$key->idpos,
+                     'tipe'=>$key->tipe,
+                     'curah'=>$key->curah,
+                     'kategori'=>$key->kategori
+                    ]
+                );
+        }
+
     }
 }
  
