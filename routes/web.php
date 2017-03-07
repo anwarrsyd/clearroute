@@ -20,3 +20,4 @@ route::get('lokasi/{lat}/{long}','HomeController@lokasi');
 route::get('getroute/{long1}/{lat1}/{long3}/{lat3}','HomeController@getRoute');
 route::get('kondisicuaca/{long1}/{lat1}/{long3}/{lat3}','HomeController@kondisicuaca');
 route::get('cobaxml','HomeController@cobaxml');
+route::get('cobajson/{long1}/{lat1}/{long3}/{lat3}','HomeController@cobajsonlagi');
