@@ -125,8 +125,8 @@ class HomeController extends Controller
                        $y=$datakoor->geometry->coordinates[0][1];
                        $array=array();
                            
-                        if($x!==null){
-                               $query=DB::select("SELECT * FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x."  ".$y.")',4326)  LIMIT 1 ");
+                        // if($x!==null){
+                               $query=DB::select("SELECT namapos,idpos FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x."  ".$y.")',4326)  LIMIT 1 ");
                                 //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
                                 // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
                                 // order by jarak limit 1");
@@ -140,28 +140,22 @@ class HomeController extends Controller
                                                      
                                                 }                                               
                             }              
-                         }   
+                         // }   
                 }
 
 
            }
 
-         return json_encode($result);
+         return json_encode($result[0]);
     }
 
     public function cobaxml(){
         $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
         $data=new SimpleXMLElement($xml);
         foreach ($data->rekaman as $key ) {
-            DB::table('rekaman')->insert(
-                    ['idrekaman'=>$key->idrekaman,
-                     'idpos'=>$key->idpos,
-                     'tipe'=>$key->tipe,
-                     'curah'=>$key->curah,
-                     'kategori'=>$key->kategori
-                    ]
-                );
-        }
+            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>$key->kategori]);
+
+                    }
 
     }
 
@@ -181,5 +175,70 @@ class HomeController extends Controller
         }
         
     }
+
+    public function xmlbmkg(){
+        $xmlstring=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
+        $xml = simplexml_load_string($xmlstring, "SimpleXMLElement", LIBXML_NOCDATA);
+        foreach ($xml as $key => $value) {
+            echo $value->kategori;
+            echo "<br>";
+            
+        }
+        // dd($xml->rekaman[0]);
+
+        $json = json_encode($xml);
+        // $waca=json_decode($json);
+        // dd($waca);
+         // return $json;
+
+    }
+
+    public function cuaca($x1,$y1,$x2,$y2){
+        $query=DB::select("SELECT * FROM datapos");
+        // $xmlstring=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
+        // $xml = simplexml_load_string($xmlstring, "SimpleXMLElement", LIBXML_NOCDATA);
+        $count=0;
+        // $array = array();
+        // $array2 = array();
+        // foreach ($xml as $key => $baik) {
+        //     $sampahorganik=(int)$baik->idpos;
+        //   $array[$sampahorganik]=1;
+        //     $array2[$sampahorganik]=$baik->kategori;    
+        // }
+                                 
+        $jsonrute=$this->getRoute($x1,$y1,$x2,$y2);
+        for ($i=0; $i <3 ; $i++) {
+         
+            foreach ($jsonrute[$i] as $key => $value) {
+               $datakoor=json_decode( $value->json);
+               $x= $datakoor->geometry->coordinates[0][0];
+               $y=$datakoor->geometry->coordinates[0][1];
+              
+              $output[$i][$count]=$this->knn($query,$x,$y);  
+              $count++;
+                          
+        }
+        
+    }
+    return $output;
+  }
+
+    public function knn($query,$x,$y){
+        $i=0;
+     
+                foreach ($query as $key => $hasil) {
+                $knn[$i]=array('value'=>sqrt(pow( (6371*cos($hasil->ydesimal)*cos($hasil->xdesimal))- (6371*cos($y)*cos($x)),2)+
+                       pow( (6371*cos($hasil->ydesimal)*sin($hasil->xdesimal))-(6371*cos($y)*sin($x)),2)),"idpos"=>$hasil->idpos,"namapos"=>$hasil->namapos,
+                'x'=>$x,'y'=>$y,'kategori'=>$hasil->kategori);
+                $i++;
+              }
+              sort($knn);
+              return$knn[0];
+
+    }
+
 }
+
+
+
  
