@@ -24,3 +24,4 @@ route::get('cobajson/{long1}/{lat1}/{long3}/{lat3}','HomeController@cobajsonlagi
 route::get('xmlbmkg','HomeController@xmlbmkg');
 route::get('cuaca/{long1}/{lat1}/{long3}/{lat3}','HomeController@cuaca');
 route::get('knn','HomeController@knn');
+route::get('ramalan','WeatherForecast@pengumpulandata');

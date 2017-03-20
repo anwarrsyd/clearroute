@@ -153,7 +153,7 @@ class HomeController extends Controller
         $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
         $data=new SimpleXMLElement($xml);
         foreach ($data->rekaman as $key ) {
-            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>$key->kategori]);
+            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>12);
 
                     }
 
