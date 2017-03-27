@@ -153,7 +153,7 @@ class HomeController extends Controller
         $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
         $data=new SimpleXMLElement($xml);
         foreach ($data->rekaman as $key ) {
-            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>12);
+            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>12]);
 
                     }
 
@@ -193,19 +193,11 @@ class HomeController extends Controller
 
     }
 
-    public function cuaca($x1,$y1,$x2,$y2){
-        $query=DB::select("SELECT * FROM datapos");
-        // $xmlstring=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
-        // $xml = simplexml_load_string($xmlstring, "SimpleXMLElement", LIBXML_NOCDATA);
-        $count=0;
-        // $array = array();
-        // $array2 = array();
-        // foreach ($xml as $key => $baik) {
-        //     $sampahorganik=(int)$baik->idpos;
-        //   $array[$sampahorganik]=1;
-        //     $array2[$sampahorganik]=$baik->kategori;    
-        // }
-                                 
+    public function cuaca($waktu,$x1,$y1,$x2,$y2){
+        $datenow=date('Y-m-d ');
+        $query=DB::select("select * from datapos inner join rekaman on datapos.idpos = rekaman.idpos
+                   where rekaman.validtime > '".$waktu."' and validdate = '".$datenow."' order by validtime limit 208");
+        $count=0;                              
         $jsonrute=$this->getRoute($x1,$y1,$x2,$y2);
         for ($i=0; $i <3 ; $i++) {
          
@@ -229,7 +221,7 @@ class HomeController extends Controller
                 foreach ($query as $key => $hasil) {
                 $knn[$i]=array('value'=>sqrt(pow( (6371*cos($hasil->ydesimal)*cos($hasil->xdesimal))- (6371*cos($y)*cos($x)),2)+
                        pow( (6371*cos($hasil->ydesimal)*sin($hasil->xdesimal))-(6371*cos($y)*sin($x)),2)),"idpos"=>$hasil->idpos,"namapos"=>$hasil->namapos,
-                'x'=>$x,'y'=>$y,'kategori'=>$hasil->kategori);
+                'x'=>$x,'y'=>$y,'kategori'=>$hasil->kategori,'ramalan'=>$hasil->kategoriramalan);
                 $i++;
               }
               sort($knn);
