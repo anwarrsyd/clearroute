@@ -20,7 +20,7 @@ class WeatherForecast extends Controller
     		$tanggal=$tahun.$haha;
     		$tanggal2=$tahun.$haha.$hari;
     		$number=0;
-    		$gambar=imagecreatefromgif('http://diseminasi.meteo.bmkg.go.id/wrf/indo_'.$tanggal.'/'.$tanggal2.'1200/jawa/HUJAN.03-JAM.'.$tanggal2.'1200/prec03-'.$tahun.''.$bulan.''.$hari.''.'21'.'.gif');
+    		$gambar=imagecreatefromgif('http://diseminasi.meteo.bmkg.go.id/wrf/indo_'.$tanggal.'/'.$tanggal2.'0000/jawa/HUJAN.03-JAM.'.$tanggal2.'0000/prec03-'.$tahun.''.$bulan.''.$hari.''.'21'.'.gif');
 		    foreach ($query as $key => $value) {
 		    	$xx=4;
 		    	$jam1 = sprintf("%02.2d", $xx);
@@ -41,7 +41,7 @@ class WeatherForecast extends Controller
 						DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>1,
+							'kategoriramalan'=>1,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -51,7 +51,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>2,
+							'kategoriramalan'=>2,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -61,7 +61,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>3,
+							'kategoriramalan'=>3,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -71,7 +71,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>4,
+							'kategoriramalan'=>4,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -81,7 +81,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>5,
+							'kategoriramalan'=>5,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -90,7 +90,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>0,
+							'kategoriramalan'=>0,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -100,7 +100,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam1,
 							'idpos'=>$value->idpos,
-							'kategori'=>6,
+							'kategoriramalan'=>6,
 							'validtime'=>'04:00:00',
 							'validdate'=>$valid,
 							]);
@@ -117,11 +117,11 @@ class WeatherForecast extends Controller
        		$jam = sprintf("%02.2d", $number);
        		$w=$jam+7;
        		if($w==25){
-         		$w='01';
+         		$w='00';
        		}
        		$wib=$w.':00:00';
        		$flag=date('Y-m-d ');
-			$gambar=imagecreatefromgif('http://diseminasi.meteo.bmkg.go.id/wrf/indo_'.$tanggal.'/'.$tanggal2.'1200/jawa/HUJAN.03-JAM.'.$tanggal2.'1200/prec03-'.$tahun.''.$bulan.''.$harisaatini.''.$jam.'.gif');
+			$gambar=imagecreatefromgif('http://diseminasi.meteo.bmkg.go.id/wrf/indo_'.$tanggal.'/'.$tanggal2.'0000/jawa/HUJAN.03-JAM.'.$tanggal2.'0000/prec03-'.$tahun.''.$bulan.''.$harisaatini.''.$jam.'.gif');
 		    foreach ($query as $key => $value) {
 
 		    	if ($value->xramalan!=null) {
@@ -141,7 +141,7 @@ class WeatherForecast extends Controller
 						DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>1,
+							'kategoriramalan'=>1,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -151,7 +151,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>2,
+							'kategoriramalan'=>2,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -161,7 +161,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>3,
+							'kategoriramalan'=>3,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -171,7 +171,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>4,
+							'kategoriramalan'=>4,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -181,7 +181,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>5,
+							'kategoriramalan'=>5,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -190,7 +190,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>0,
+							'kategoriramalan'=>0,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);
@@ -200,7 +200,7 @@ class WeatherForecast extends Controller
 							DB::table('rekaman')->insert([
 							'idrekaman'=>$tahun.$bulan.$harisaatini.$jam,
 							'idpos'=>$value->idpos,
-							'kategori'=>6,
+							'kategoriramalan'=>6,
 							'validtime'=>$wib,
 							'validdate'=>$flag,
 							]);

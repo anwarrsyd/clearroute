@@ -153,7 +153,7 @@ class HomeController extends Controller
         $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
         $data=new SimpleXMLElement($xml);
         foreach ($data->rekaman as $key ) {
-            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>12]);
+            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>$key->kategori]);
 
                     }
 
@@ -196,8 +196,10 @@ class HomeController extends Controller
     public function cuaca($waktu,$x1,$y1,$x2,$y2){
         $datenow=date('Y-m-d ');
         $query=DB::select("select * from datapos inner join rekaman on datapos.idpos = rekaman.idpos
-                   where rekaman.validtime > '".$waktu."' and validdate = '".$datenow."' order by validtime limit 208");
-        $count=0;                              
+                   where rekaman.validtime > '".$waktu."' and validdate = '".$datenow."'  order by validtime limit 208");
+        $count=0;  
+        $weightcur=0; 
+        $weightfrcst=0;                           
         $jsonrute=$this->getRoute($x1,$y1,$x2,$y2);
         for ($i=0; $i <3 ; $i++) {
          
@@ -207,12 +209,22 @@ class HomeController extends Controller
                $y=$datakoor->geometry->coordinates[0][1];
               
               $output[$i][$count]=$this->knn($query,$x,$y);  
+               $weightcur+=$output[$i][$count]['kategori'];
+               $weightfrcst+=$output[$i][$count]['ramalan'];
               $count++;
+
                           
         }
         
+        
+        $finalcurr=$weightcur/$count;
+        $output[$i]['weightcurrent']=$finalcurr;
+        $finalfrcst=$weightfrcst/$count;
+        $output[$i]['weightforecast']=$finalfrcst;
+   
     }
-    return $output;
+    dd($output);
+     return json_encode($output);
   }
 
     public function knn($query,$x,$y){
