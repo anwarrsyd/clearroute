@@ -223,7 +223,6 @@ class HomeController extends Controller
         $output[$i]['weightforecast']=$finalfrcst;
    
     }
-    dd($output);
      return json_encode($output);
   }
 
