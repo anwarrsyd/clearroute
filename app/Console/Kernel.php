@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        'App\Console\Commands\WeatherConsole',
+	'App\Console\Commands\ForecastConsole',
     ];
 
     /**
@@ -24,8 +25,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->call('Full\Namespace\HomeController@cobaxml')
-                 ->everyMinute();
+        $schedule->command('weather:console')
+                 ->everyFiveMinutes();
+	$schedule->command('forecast:console')->daily();
     }
 
     /**

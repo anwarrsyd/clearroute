@@ -35,24 +35,97 @@ class HomeController extends Controller
     public function getRoute($x1, $y1, $x3, $y3)
     {
         // $array[0] = DB::SELECT("SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")");
+        // $array[0] = DB::SELECT("SELECT jsonb_build_object(
+        //                         'type',       'Feature',
+        //                         'properties', '{}',
+        //                         'geometry',   ST_AsGeoJSON(geom)::jsonb
+        //                     ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x3.",".$y3.",".$x1.",".$y1.")) AS row where row.gid IS NOT NULL");
+
+        // for($i=1; $i<=2; $i++)
+        // {
+        //     $x2 = $this->finalLongitude($x3, $x1);
+        //     $y2 = $this->finalLatitude($y3, $y1);
+        //     $array[$i] = DB::SELECT("SELECT jsonb_build_object(
+        //         'type',       'Feature',
+        //         'properties', '{}',
+        //         'geometry',   ST_AsGeoJSON(geom)::jsonb
+        //     ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+        // }
+
+        $array_koordinat = [];
+        $array_koordinat_baru = [];
+        // $array[0] = DB::SELECT("SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")");
         $array[0] = DB::SELECT("SELECT jsonb_build_object(
                                 'type',       'Feature',
                                 'properties', '{}',
                                 'geometry',   ST_AsGeoJSON(geom)::jsonb
-                            ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x3.",".$y3.",".$x1.",".$y1.")) AS row where row.gid IS NOT NULL");
+                            ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x3.",".$y3.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+
+        $i = 0;
+        foreach ($array[0] as $key) {
+            $coordinates[$i] = $key->json;
+            $coba = json_decode($coordinates[$i]);
+            for($a=0; $a<count($coba->geometry->coordinates); $a++)
+            {
+                if($a==0)
+                    $b=$a;
+                else
+                    $b=0;
+                array_push($array_koordinat, $coba->geometry->coordinates[$a][$b].",".$coba->geometry->coordinates[$a][$b+1]);
+            }
+            $i++;
+        }
+
+        $randomcoordinates = $this->getRandomCoordinates($array_koordinat);
+
+        $xy_random = explode(",", $randomcoordinates);
+        $i = 1;
+
+        $newcoordinate = DB::SELECT("SELECT x1,y1 FROM ways WHERE ST_Distance_Sphere(the_geom, st_makepoint(".$xy_random[0].",".$xy_random[1].")) <= 5000 and (class_id = 108 or class_id = 109) LIMIT 30");
+            
+        foreach ($newcoordinate as $key) {
+            $coordinates[$i] = $key;
+            // echo "i: ".$i." ".$coordinates[$i]->x1.",".$coordinates[$i]->y1."</br>";
+            array_push($array_koordinat_baru, $coordinates[$i]->x1.",".$coordinates[$i]->y1);
+            $i++;
+        }
+
+        // echo "array koordinat baru: ".count($array_koordinat_baru)."</br>";
+
+        for($rute=0; $rute<2; $rute++)
+        {
+            $randomcoordinates = $this->getRandomCoordinates($array_koordinat_baru);
+            $xy_random[$rute] = explode(",", $randomcoordinates);
+        }
 
         for($i=1; $i<=2; $i++)
         {
-            $x2 = $this->finalLongitude($x3, $x1);
-            $y2 = $this->finalLatitude($y3, $y1);
+            if($i==1)
+                $a=$i-1;
+            else
+                $a=0;
             $array[$i] = DB::SELECT("SELECT jsonb_build_object(
                 'type',       'Feature',
                 'properties', '{}',
                 'geometry',   ST_AsGeoJSON(geom)::jsonb
-            ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+            ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$xy_random[$i-1][$a].",".$xy_random[$i-1][$a+1].",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
         }
 
         return $array;
+    }
+
+    function getRandomCoordinates($array)
+    {
+        $random = mt_rand(0, count($array)-1);
+        // $random = count($array)/2;
+        return $array[$random];
+    }
+
+    function getCenteredCoordinates($array)
+    {
+        // $random = mt_rand(0, count($array)-1);
+        $random = count($array)/2;
+        return $array[$random];
     }
 
     function randomFloat($min = 0, $max = 1) {

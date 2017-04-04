@@ -1,22 +1,59 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Console\Commands;
 
-use Illuminate\Http\Request;
+use Illuminate\Console\Command;
 use DB;
 
-class WeatherForecast extends Controller
+class ForecastConsole extends Command
 {
-    public function pengumpulandata(){
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'forecast:console';
 
-    		$query=DB::table('datapos')->select('idpos','xramalan','yramalan','namapos')->get();
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'This command will update forecast data at 00:00';
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function handle()
+    {
+        
+    		date_default_timezone_set("Asia/Jakarta");
+
+                $query=DB::table('datapos')->select('idpos','xramalan','yramalan','namapos')->get();
     		// dd($query);
 
-		  	$tahun=date('Y');
+		$tahun=date('Y');
     		$bulan= strtoupper(date('M'));
-    		$hari=date('d')-1;
-    		$harisaatini=date('d');    		
-    		$haha=date('m');
+                //$angkadate= sprintf("%02.2d", $number);
+
+    		$hari= sprintf("%02.2d", date('d')-1);
+
+    		$harisaatini=sprintf("%02.2d",date('d'));    		
+    	
+                $haha=date('m');
+
     		$tanggal=$tahun.$haha;
     		$tanggal2=$tahun.$haha.$hari;
     		$number=0;
@@ -219,14 +256,5 @@ class WeatherForecast extends Controller
 		    $number+=3;
     	}
     	
-		    
-    }
-
-    public function cobajam(){
-    	date_default_timezone_set("Asia/Jakarta");
-
-    	$date=date('h:i:a');
-	    dd($date);
-
     }
 }
