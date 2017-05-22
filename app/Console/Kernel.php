@@ -14,7 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         'App\Console\Commands\WeatherConsole',
-	'App\Console\Commands\ForecastConsole',
+	   'App\Console\Commands\ForecastConsole',
+       'App\Console\Commands\UpdateForecast',
     ];
 
     /**
@@ -25,9 +26,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('weather:console')
-                 ->everyFiveMinutes();
-	$schedule->command('forecast:console')->daily();
+        $schedule->command('weather:console')->everyMinute();  
+    	$schedule->command('forecast:console')->daily(); 
+        $schedule->command('update:forecast')->dailyAt('08:00');
     }
 
     /**
