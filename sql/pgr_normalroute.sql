@@ -1,8 +1,3 @@
--- THE FOLLOWING PROCEDURAL FUNCTION WILL GIVE US THE LINE CONNECTING DESTINATION POINTS --
--- The point procedural function is not necessary as starting and ending point will be shown in different colors --
--- and the intermediate in different, so there shouldn't be any confusion --
--- Enter the variadic coordinates in the order "start", "via" etc etc, "end" --
-
 create or replace function pgr_normalroute(IN tbl character varying, 
 variadic double precision[],
 OUT seq integer, 
@@ -28,33 +23,35 @@ declare
 	sql_astar text;
 	rec_astar record;
 begin
+	-- menghapus tabel sementara apabila sudah ada
 	drop table if exists tmp;
-	-- We will create a temporary table which will hold all the required field values i.e. node_id, closest point's X coord, closest point's Y coord --
+	-- membuat tabel sementara
 	create temporary table tmp(id integer, node_id integer, x double precision, y double precision);
-	-- Array Length of above defined variadic function --
-	-- ($2, 1) means that the 2nd argument and the array is of dimension one --
+	-- mendefiniskan ukuran array
+	-- ($2, 1) berarti parameter kedua dan array nya merupakan array 1 dimensi
 	arrayLengthHalf = (array_length($2,1))/2;
-	-- For Loop to feed our above declared table, index number 0 is nothing, means first array value is $2[1] --
+	-- Untuk perulangan sesuai dengan tabel yg dibuat, index 0 diabaikan dan dimulai dari 2[1]
 	For i in 1..arrayLengthHalf Loop
 		a := i*2-1;
 		x1 := $2[a];
 		b := a+1;
 		y1 := $2[b];
-		--Use the execute statement
+		-- Memasukkan node id yang didapat dari query di bawah, ke dalam tabel sementara
 		execute 'insert into tmp (id, node_id, x, y) 
 			select '||i||', id, st_x(the_geom)::double precision, st_y(the_geom)::double precision
 			from ways_vertices_pgr ORDER BY the_geom <-> ST_GeometryFromText(''Point('||x1||' '||y1||')'', 4326) limit 1;';		
 	End Loop;
-	-- TSP nodes order calculation --
 	sql_node := 'SELECT * FROM tmp';	
-	-- Extracting the geom values row by row --
+	-- Mengambil kolom geom dari tabel sementara
 	seq := 0;
 	source_var := -1;
 	FOR REC_ROUTE IN EXECUTE sql_node
 		LOOP
+			-- Mengecek apakah parameter merupakan koordinat awal
 			If (source_var = -1) Then
 				execute 'select node_id from tmp where node_id = '||REC_ROUTE.node_id||'' into node;
 				source_var := node.node_id;
+			-- Apabila parameter merupakan koordinat tujuan
 			Else
 				execute 'select node_id from tmp where node_id = '||REC_ROUTE.node_id||'' into node;
 				target_var := node.node_id;
@@ -64,6 +61,7 @@ begin
 						 ||	quote_ident(tbl) || ''','
 					    || source_var || ',' || target_var
 						 || ', true, true) AS a LEFT JOIN ' || quote_ident(tbl) || ' AS b ON (a.id2 = b.gid) ORDER BY a.seq';
+				-- Menjalankan fungsi algoritma A star pada pgrouting, dan mengembalikan hasilnya
 				For rec_astar in execute sql_astar
 					Loop
 						seq := seq +1 ;
@@ -77,10 +75,7 @@ begin
 					End Loop;
 			END IF;
 		END LOOP;	
-	-- Drop the temporary table, otherwise the next time you will run the query it will show that the matrix table already exists --
-	
 	return;
-	
 	
 	--EXCEPTION
 		--WHEN internal_error THEN
@@ -93,14 +88,3 @@ begin
 end;
 $body$
 language plpgsql volatile STRICT;
-
--- In order to use this function --
--- Enter the variadic coordinates in the order "start", "via" etc etc, "end" --
--- SELECT geom FROM pgr_aStarFromAtoBviaC_line('ways', 28.231233, 41.324324, 29.432432, 42.423542, 30.234342, 43.234543, 28.443234, 42.454355) --
--- SELECT cost FROM pgr_aStarFromAtoBviaC_line('ways', 28.231233, 41.324324, 29.432432, 42.423542, 30.234342, 43.234543, 28.443234, 42.454355) --
--- etc etc --
--- In GeoServer, we make an SQL View like the following --
--- SELECT geom FROM pgr_aStarFromAtoBviaC_line('ways', %variadicArray%) ORDER BY seq --
--- and give the default values this 28.94603,41.00764,28.95402,41.01789,28.96145,41.00522,28.96650,41.01191 --
--- But still have to figure out how to build a request from the OpenLayers3? --
--- For time being, make different SQL Views for different possibilities (4pt, 5pt, 6pt etc)

@@ -10,16 +10,16 @@ class HomeController extends Controller
 {
     public function coba(){
 
-    		$koordinat=DB::table('datapos')->select('xdesimal','ydesimal','idpos')->get();
-    		// dd($koordinat);
-    		foreach ($koordinat as $key ) {
-    		$coba = DB::table("datapos")->select(DB::raw("ST_GeomFromText('POINT(".$key->xdesimal."  ".$key->ydesimal.")',4326)"))->first();
-    		 // dd($coba);
-    		 
-    		DB::table('datapos')
-            ->where('idpos',  $key->idpos)
-            ->update(['the_geom' => $coba->st_geomfromtext]);	
-    		}
+            $koordinat=DB::table('datapos')->select('xdesimal','ydesimal','idpos')->get();
+            // dd($koordinat);
+            foreach ($koordinat as $key ) {
+            $coba = DB::table("datapos")->select(DB::raw("ST_GeomFromText('POINT(".$key->xdesimal."  ".$key->ydesimal.")',4326)"))->first();
+             // dd($coba);
+             
+            DB::table('datapos')
+            ->where('idpos', $key->idpos)
+            ->update(['the_geom' => $coba->st_geomfromtext]);   
+            }
     }
 
     public function lokasi($lat,$long){
@@ -32,8 +32,44 @@ class HomeController extends Controller
         dd($lokasi);
     }
 
-    public function getRoute($x1, $y1, $x3, $y3)
+    public function getRouteCuaca1($x1, $y1, $x3, $y3)
     {
+        $waktu="21:00:00";
+        // $array[0] = DB::SELECT("SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")");
+        $array[0] = DB::SELECT("SELECT jsonb_build_object(
+                                'type',       'Feature',
+                                'properties', '{}',
+                                'geometry',   ST_AsGeoJSON(geom)::jsonb
+                            ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x1.",".$y1.",".$x3.",".$y3.")) AS row WHERE row.gid IS NOT NULL");
+
+        $array['cuaca1']=$this->cuaca($waktu,$array[0]);
+        for($i=1; $i<=2; $i++)
+        {
+            $x2 = $this->finalLongitude($x3, $x1);
+            $y2 = $this->finalLatitude($y3, $y1);
+            $array[$i] = DB::SELECT("SELECT jsonb_build_object(
+                'type',       'Feature',
+                'properties', '{}',
+                'geometry',   ST_AsGeoJSON(geom)::jsonb
+            ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x1.",".$y1.",".$x2.",".$y2.",".$x3.",".$y3.")) AS row WHERE row.gid IS NOT NULL");
+
+            $flag2=$i+1;
+            $flag="cuaca".$flag2;
+            
+            if($i==1)
+              $array['random1'] = $x2.','.$y2;
+            elseif($i==2)
+              $array['random2'] = $x2.','.$y2;
+            
+            $array[$flag]=$this->cuaca($waktu,$array[$i]);
+        } 
+
+        return $array;
+    }
+
+    public function getRouteCuaca($x1, $y1, $x3, $y3)
+    {
+        $waktu="21:00:00";
         $array_koordinat = [];
         $array_koordinat_baru = [];
         // $array[0] = DB::SELECT("SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")");
@@ -41,7 +77,9 @@ class HomeController extends Controller
                                 'type',       'Feature',
                                 'properties', '{}',
                                 'geometry',   ST_AsGeoJSON(geom)::jsonb
-                            ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x3.",".$y3.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+                            ) AS json FROM (SELECT * FROM pgr_normalroute('backup_ways', ".$x1.",".$y1.",".$x3.",".$y3.")) AS row WHERE row.gid IS NOT NULL");
+
+        $array['cuaca1']=$this->cuaca($waktu,$array[0]);
 
         $i = 0;
         foreach ($array[0] as $key) {
@@ -62,26 +100,6 @@ class HomeController extends Controller
 
         $xy_random = explode(",", $randomcoordinates);
         $i = 1;
-        // for($rute=0; $rute<2; $rute++)
-        // {
-        //     $randomcoordinates = $this->getRandomCoordinates($array_koordinat);
-
-        //     $xy_random = explode(",", $randomcoordinates);
-        //     // echo "titik random dari rute: ".$xy_random[0].",".$xy_random[1]."</br>";
-
-        //     $newcoordinate[$rute] = DB::SELECT("SELECT x1,y1 FROM ways WHERE ST_Distance_Sphere(the_geom, st_makepoint(".$xy_random[0].",".$xy_random[1].")) <= 5000 and (class_id = 108 or class_id = 109) LIMIT 15");
-            
-        //     foreach ($newcoordinate[$rute] as $key) {
-        //         $coordinates[$i] = $key;
-        //         // echo "i: ".$i." ".$coordinates[$i]->x1.",".$coordinates[$i]->y1."</br>";
-        //         array_push($array_koordinat_baru, $coordinates[$i]->x1.",".$coordinates[$i]->y1);
-        //         $i++;
-        //     }
-
-        // }
-
-        // echo $xy_random[0]."</br>";
-        // echo $xy_random[1]."</br></br>";
 
         $newcoordinate = DB::SELECT("SELECT x1,y1 FROM ways WHERE ST_Distance_Sphere(the_geom, st_makepoint(".$xy_random[0].",".$xy_random[1].")) <= 5000 and (class_id = 108 or class_id = 109) LIMIT 30");
             
@@ -100,66 +118,40 @@ class HomeController extends Controller
             $xy_random[$rute] = explode(",", $randomcoordinates);
         }
 
-        // echo $array_koordinat_baru[0]."</br>";
-        // echo $array_koordinat_baru[1]."</br>";
-        // $json_newcoordinate = json_decode($newcoordinate[0]);
-        // echo $xy_random[0][0].",".$xy_random[0][1]."</br>";
-        // echo $xy_random[1][0].",".$xy_random[1][1]."</br>";
-
         for($i=1; $i<=2; $i++)
         {
             if($i==1)
                 $a=$i-1;
             else
                 $a=0;
+              
             $array[$i] = DB::SELECT("SELECT jsonb_build_object(
                 'type',       'Feature',
                 'properties', '{}',
                 'geometry',   ST_AsGeoJSON(geom)::jsonb
-            ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$xy_random[$i-1][$a].",".$xy_random[$i-1][$a+1].",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+            ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x1.",".$y1.",".$xy_random[$i-1][$a].",".$xy_random[$i-1][$a+1].",".$x3.",".$y3.")) AS row WHERE row.gid IS NOT NULL");
+        
+            $flag2=$i+1;
+            $flag="cuaca".$flag2;
+            
+            $array[$flag]=$this->cuaca($waktu,$array[$i]);
         }
-
-        // for($i=1; $i<=2; $i++)
-        // {
-        //     $x2 = $this->randomLongitude($xy_random[0]);
-        //     $y2 = $this->randomLatitude($xy_random[1]);
-        //     echo $x2.",".$y2."</br>";
-        //     if($i==1)
-        //         $a=$i-1;
-        //     else
-        //         $a=0;
-        //     $array[$i] = DB::SELECT("SELECT jsonb_build_object(
-        //         'type',       'Feature',
-        //         'properties', '{}',
-        //         'geometry',   ST_AsGeoJSON(geom)::jsonb
-        //     ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('backup_ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
-        // }
-
         return $array;
     }
 
-    // public function getRoute($x1, $y1, $x3, $y3)
-    // {
-    //     // $array[0] = DB::SELECT("SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")");
-    //     $array[0] = DB::SELECT("SELECT jsonb_build_object(
-    //                             'type',       'Feature',
-    //                             'properties', '{}',
-    //                             'geometry',   ST_AsGeoJSON(geom)::jsonb
-    //                         ) AS json FROM (SELECT * FROM pgr_normalroute('ways', ".$x3.",".$y3.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
+    function getRandomCoordinates($array)
+    {
+        $random = mt_rand(0, count($array)-1);
+        // $random = count($array)/2;
+        return $array[$random];
+    }
 
-    //     for($i=1; $i<=2; $i++)
-    //     {
-    //         $x2 = $this->finalLongitude($x3, $x1);
-    //         $y2 = $this->finalLatitude($y3, $y1);
-    //         $array[$i] = DB::SELECT("SELECT jsonb_build_object(
-    //             'type',       'Feature',
-    //             'properties', '{}',
-    //             'geometry',   ST_AsGeoJSON(geom)::jsonb
-    //         ) AS json FROM (SELECT * FROM pgr_aStarFromAtoBviaC_line('ways', ".$x3.",".$y3.",".$x2.",".$y2.",".$x1.",".$y1.")) AS row WHERE row.gid IS NOT NULL");
-    //     } 
-
-    //     return $array;
-    // }
+    function getCenteredCoordinates($array)
+    {
+        // $random = mt_rand(0, count($array)-1);
+        $random = count($array)/2;
+        return $array[$random];
+    }
 
     function randomFloat($min = 0, $max = 1) {
         return $min + mt_rand() / mt_getrandmax() * ($max - $min);
@@ -217,68 +209,194 @@ class HomeController extends Controller
         return $batas_baru;
     }
 
-    function getRandomCoordinates($array)
-    {
-        $random = mt_rand(0, count($array)-1);
-        // $random = count($array)/2;
-        return $array[$random];
-    }
-
-    function getCenteredCoordinates($array)
-    {
-        // $random = mt_rand(0, count($array)-1);
-        $random = count($array)/2;
-        return $array[$random];
-    }
-
     public function kondisicuaca($x1,$y1,$x2,$y2){
-        $str=$this->getRoute($x1,$y1,$y2,$x2);
-        $coba=json_decode($str);
+        $str=$this->getRoute($x1,$y1,$x2,$y2);
+        // $coba=json_decode($str);
 
          // rute 1
         for ($a=0; $a <3 ; $a++) { 
                $count=0;
                $i=0;
-               foreach ($coba[$a] as $key => $value) {
-               $x=$value->x;
-               $y=$value->y;
-                   
-                if($x!==null){
-                       $query=DB::select("SELECT * FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x."  ".$y.")',4326)  LIMIT 1 ");
-                        //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
-                        // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
-                        // order by jarak limit 1");
-                       
-                       foreach ($query as $key => $hasil) {
-                        $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
-                       
-                        foreach ($kategoricuaca as $key => $mantap) {
-                                            $i+=$mantap->kategori;
-                                            $coba[$a][$count]->kategori=$mantap->kategori;
-                                            $count++;
-                                        }                                               
-                    }              
+               foreach ($str[$a] as $key => $value) {
+                       $datakoor=json_decode( $value->json);
+                       $x= $datakoor->geometry->coordinates[0][0];
+                       $y=$datakoor->geometry->coordinates[0][1];
+                       $array=array();
+                           
+                        // if($x!==null){
+                               $query=DB::select("SELECT namapos,idpos FROM datapos  ORDER BY the_geom <-> ST_GeometryFromText('POINT(".$x."  ".$y.")',4326)  LIMIT 1 ");
+                                //     $query=DB::select("select *, sqrt(power( (6371*cos(datapos.ydesimal)*cos(datapos.xdesimal))- (6371*cos(".$y.")*cos(".$x.")),2)+
+                                // power( (6371*cos(datapos.ydesimal)*sin(datapos.xdesimal))-(6371*cos(".$y.")*sin(".$x.")),2)) as jarak from datapos 
+                                // order by jarak limit 1");
+                               
+                               foreach ($query as $key => $hasil) {
+                                $kategoricuaca=DB::table('rekaman')->select('kategori')->where('idpos','=',$hasil->idpos)->get();
+                               
+                                foreach ($kategoricuaca as $key => $mantap) {
+                                                    $result[$a][$count]=array('x'=>$x,'y'=>$y,'kategori'=>$mantap->kategori,'namapos'=>$hasil->namapos);
+                                                    $count++;
+                                                     
+                                                }                                               
+                            }              
+                         // }   
                 }
-                }
+
+
            }
 
-         return json_encode($coba);  
+         return json_encode($result[0]);
     }
 
     public function cobaxml(){
         $xml=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
         $data=new SimpleXMLElement($xml);
         foreach ($data->rekaman as $key ) {
-            DB::table('rekaman')->insert(
-                    ['idrekaman'=>$key->idrekaman,
-                     'idpos'=>$key->idpos,
-                     'tipe'=>$key->tipe,
-                     'curah'=>$key->curah,
-                     'kategori'=>$key->kategori
-                    ]
-                );
-        }
+            DB::table('datapos')->where('idpos',$key->idpos)->update(['kategori'=>$key->kategori]);
+
+                    }
 
     }
+
+    public function cobajsonlagi($x1,$y1,$x2,$y2){
+
+        $data=$this->getRoute($x1,$y1,$x2,$y2);
+        // $fix=json_decode($data);
+        foreach ($data[0] as $key => $value) {
+            $tes=json_decode( $value->json);
+        
+            echo $tes->geometry->coordinates[0][0];
+            echo "`<br>";
+            echo $tes->geometry->coordinates[0][1];
+            echo "`<br>";
+                       
+            // echo $value->json;
+        }
+        
+    }
+
+    public function xmlbmkg(){
+        $xmlstring=file_get_contents("http://110.139.67.15/sby/rekaman_tenminute.xml");
+        $xml = simplexml_load_string($xmlstring, "SimpleXMLElement", LIBXML_NOCDATA);
+        foreach ($xml as $key => $value) {
+            echo $value->kategori;
+            echo "<br>";
+            
+        }
+        // dd($xml->rekaman[0]);
+
+        $json = json_encode($xml);
+        // $waca=json_decode($json);
+        // dd($waca);
+         // return $json;
+
+    }
+
+  //   public function cuaca($waktu,$x1,$y1,$x2,$y2){
+  //       $datenow=date('Y-m-d ');
+  //       $query=DB::select("select * from datapos inner join rekaman on datapos.idpos = rekaman.idpos
+  //                  where rekaman.validtime > '".$waktu."' and validdate = '".$datenow."'  order by validtime limit 208");
+  //       $count=0;  
+  //       $weightcur=0; 
+  //       $weightfrcst=0;                           
+  //       $jsonrute=$this->getRoute($x1,$y1,$x2,$y2);
+  //       for ($i=0; $i <3 ; $i++) {
+         
+  //           foreach ($jsonrute[$i] as $key => $value) {
+  //              $datakoor=json_decode( $value->json);
+  //              $x= $datakoor->geometry->coordinates[0][0];
+  //              $y=$datakoor->geometry->coordinates[0][1];
+              
+  //             $output[$i][$count]=$this->knn($query,$x,$y);  
+  //              $weightcur+=$output[$i][$count]['kategori'];
+  //              $weightfrcst+=$output[$i][$count]['ramalan'];
+  //             $count++;
+
+                          
+  //       }
+        
+        
+  //       $finalcurr=$weightcur/$count;
+  //       $output[$i]['weightcurrent']=$finalcurr;
+  //       $finalfrcst=$weightfrcst/$count;
+  //       $output[$i]['weightforecast']=$finalfrcst;
+   
+  //   }
+  //    return json_encode($output);
+  // }
+
+  //   public function knn($query,$x,$y){
+  //       $i=0;
+     
+  //               foreach ($query as $key => $hasil) {
+  //               $knn[$i]=array('value'=>sqrt(pow( (6371*cos($hasil->ydesimal)*cos($hasil->xdesimal))- (6371*cos($y)*cos($x)),2)+
+  //                      pow( (6371*cos($hasil->ydesimal)*sin($hasil->xdesimal))-(6371*cos($y)*sin($x)),2)),"idpos"=>$hasil->idpos,"namapos"=>$hasil->namapos,
+  //               'x'=>$x,'y'=>$y,'kategori'=>$hasil->kategori,'ramalan'=>$hasil->kategoriramalan);
+  //               $i++;
+  //             }
+  //             sort($knn);
+  //             return$knn[0];
+
+  //   }
+
+      public function cuaca($waktu,$x1){
+        $datenow=date('Y-m-d ');
+        $query=DB::select("select * from datapos inner join rekaman on datapos.idpos = rekaman.idpos
+                   where rekaman.validtime > '".$waktu."' and validdate = '".$datenow."'  order by validtime limit 208");
+        $count=0;  
+        $weightcur=0; 
+        $weightfrcst=0;                           
+        $jsonrute=$x1;
+        // for ($i=0; $i <3 ; $i++) {
+           $output=array();
+             foreach ($jsonrute as $key => $value) {
+               $datakoor=json_decode( $value->json);
+               $x= $datakoor->geometry->coordinates[0][0];
+               $y=$datakoor->geometry->coordinates[0][1];
+              
+              
+              array_push($output,$this->knn($query,$x,$y));  
+               $weightcur+=$output[$count]['kategori'];
+               $weightfrcst+=$output[$count]['ramalan'];
+              $count++;
+
+                          
+        }
+
+             
+        $finalcurr=$weightcur/$count;
+        $finalfrcst=$weightfrcst/$count;
+        $bobot=array('weightcurr'=>$finalcurr,'weightfrcst'=>$finalfrcst);
+        array_push($output,$bobot);
+   
+    // }
+     return $output;
+  }
+
+    public function knn($query,$x,$y){
+        $i=0;
+     
+                foreach ($query as $key => $hasil) {
+                $knn[$i]=array('value'=>sqrt(pow( (6371*cos($hasil->ydesimal)*cos($hasil->xdesimal))- (6371*cos($y)*cos($x)),2)+
+                       pow( (6371*cos($hasil->ydesimal)*sin($hasil->xdesimal))-(6371*cos($y)*sin($x)),2)),"idpos"=>$hasil->idpos,"namapos"=>$hasil->namapos,
+                'x'=>$x,'y'=>$y,'kategori'=>$hasil->kategori,'ramalan'=>$hasil->kategoriramalan);
+                $i++;
+              }
+              sort($knn);
+              return$knn[0];
+
+    }
+
+    public function isidir(){
+      $dir = "/var/www/html/TA/as";
+      $a = scandir($dir);
+      foreach ($a as $key ) {
+      echo "1";
+      echo "<br>";
+      }
+    }
+
 }
+
+
+
  

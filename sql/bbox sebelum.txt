@@ -1,0 +1,27 @@
+SELECT b.gid, a.cost, b.the_geom, b.name, b.source, b.target, b.x1 AS x, b.y1 AS y FROM ' ||
+				'pgr_astar(''SELECT gid::integer AS id, source::integer, target::integer, ' ||
+				'cost_clearroute * penalty::double precision AS cost, reverse_cost_s * penalty::double precision AS reverse_cost, x1, y1, x2, y2 FROM '
+						 ||	quote_ident(tbl) || ' JOIN osm_way_classes USING (class_id)'','
+					    || source_var || ',' || target_var
+						 || ', true, true) AS a LEFT JOIN ' || quote_ident(tbl) || ' AS b ON (a.id2 = b.gid) ORDER BY a.seq
+
+
+
+
+SELECT b.gid, a.cost, b.the_geom, b.name, b.source, b.target, b.x1 AS x, b.y1 AS y,  
+				ST_Reverse(b.the_geom) AS flip_geom FROM ' ||
+				'pgr_astar(''SELECT gid::integer AS id, source::integer, target::integer, ' ||
+				'cost_clearroute * penalty::double precision AS cost, reverse_cost_s * penalty::double precision AS reverse_cost, x1, y1, x2, y2 FROM '
+						 ||	quote_ident(tbl) || ' JOIN osm_way_classes USING (class_id)'','
+					    || source_var || ',' || target_var
+						 || ', true, true) AS a LEFT JOIN ' || quote_ident(tbl) || ' AS b ON (a.id2 = b.gid) ORDER BY a.seq
+
+
+
+SELECT b.gid, a.cost, b.the_geom, b.name, b.source, b.target, b.x1 AS x, b.y1 AS y FROM ' ||
+				'pgr_astar(''SELECT gid::integer AS id, source::integer, target::integer, ' ||
+				'cost_clearroute * penalty::double precision AS cost, reverse_cost_s * penalty::double precision AS reverse_cost, x1, y1, x2, y2 FROM '
+						 ||	quote_ident(tbl) || ' AS r JOIN osm_way_classes USING (class_id), (SELECT ST_Expand(ST_Extent(the_geom),0.1) as box FROM backup_ways as l1 WHERE l1.source = ' || source_var || ' OR l1.target = ' || target_var || ') as box WHERE r.the_geom && box.box '','
+					    || source_var || ',' || target_var
+						 || ', true, true) AS a LEFT JOIN ' || quote_ident(tbl) || ' AS b ON (a.id2 = b.gid) ORDER BY a.seq
+
